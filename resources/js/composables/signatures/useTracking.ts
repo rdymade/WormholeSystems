@@ -1,3 +1,15 @@
+import {
+    createMapSolarsystem,
+    createTracking,
+    formatBookmarkName,
+    formatHomeBookmarkName,
+    getSignatureIdShort,
+    isWormholeSystem,
+    map_solarsystems,
+    suggestAlias,
+    updateMapUserSettings,
+} from '@/composables/map';
+import { getSecurityClass } from '@/composables/map/utils/security';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useMapIgnoredSystems } from '@/composables/useMapIgnoredSystems';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
@@ -18,7 +30,6 @@ export function useTracking() {
     const { isIgnored } = useMapIgnoredSystems();
     const page = useShowMap();
     const { staticData } = useStaticData();
-    const { map_solarsystems } = useMapSolarsystems();
 
     const is_tracking = computed(() => map_user_settings.value?.is_tracking && character.value && map_user_settings.value?.tracking_allowed);
     const is_tracking_allowed = computed(() => map_user_settings.value.tracking_allowed);
@@ -53,11 +64,19 @@ export function useTracking() {
         const target = target_solarsystem.value;
         if (!origin || !target) return null;
 
+        const connectedAliases = map_connections.value
+            .filter((connection) => connection.from_map_solarsystem_id === origin.id || connection.to_map_solarsystem_id === origin.id)
+            .map((connection) => {
+                const otherId = connection.from_map_solarsystem_id === origin.id ? connection.to_map_solarsystem_id : connection.from_map_solarsystem_id;
+                return map_solarsystems.value.find((system) => system.id === otherId)?.alias ?? null;
+            });
+
         return suggestAlias({
             parentAlias: origin.alias,
             targetIsWormhole: isWormholeSystem(target),
             originIsWormhole: isWormholeSystem(origin.solarsystem),
             aliases: map_solarsystems.value.map((s) => s.alias).filter((alias): alias is string => Boolean(alias)),
+            connectedAliases,
         });
     });
 
@@ -75,6 +94,12 @@ export function useTracking() {
             handleSolarsystemJump(old_solarsystem_id, new_solarsystem_id);
         },
     );
+
+    onMounted(() => {
+        if (!map_user_settings.value.is_tracking) return;
+
+        addCurrentSolarsystemIfNotOnMap();
+    });
 
     function handleSolarsystemJump(old_solarsystem_id: number | null, new_solarsystem_id: number) {
         if (isIgnored(new_solarsystem_id)) return;
@@ -94,6 +119,11 @@ export function useTracking() {
         if (a.map_connection_id && !b.map_connection_id) return 1;
         if (!a.map_connection_id && b.map_connection_id) return -1;
         return a.signature_id?.localeCompare(b.signature_id);
+    }
+
+    function getTargetSolarsystemClass(system: TSolarsystem): TSolarsystemClass {
+        if (system.class) return system.class;
+        return getSecurityClass(system.security);
     }
 
     function isPossibleSignature(signature: TSignature): boolean {
@@ -140,6 +170,21 @@ export function useTracking() {
         updateMapUserSettings(page.props.map.slug, {
             is_tracking: !map_user_settings.value.is_tracking,
         });
+    }
+
+    function addCurrentSolarsystemIfNotOnMap() {
+        const active_solarsystem_id = character.value?.status?.solarsystem_id;
+        if (!active_solarsystem_id) return;
+
+        if (isIgnored(active_solarsystem_id)) return;
+
+        if (isSolarsystemInMap(active_solarsystem_id)) return;
+
+        createMapSolarsystem(active_solarsystem_id);
+    }
+
+    function isSolarsystemInMap(solarsystem_id: number): boolean {
+        return map_solarsystems.value.some((s) => s.solarsystem_id === solarsystem_id);
     }
 
     function handleSelectSignature(selection: {
