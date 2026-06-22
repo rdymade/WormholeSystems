@@ -62,6 +62,7 @@ final class UpdateMapUserSettingRequest extends FormRequest
             'hidden_cards.*' => ['string', Rule::enum(RemovableCard::class)],
             'show_threat_level' => ['boolean'],
             'show_statics_first' => ['boolean'],
+            'select_jumped_system' => ['boolean'],
             'is_archived' => ['boolean'],
             'background_image_mode' => ['nullable', 'string', Rule::enum(MapBackgroundMode::class)],
             'layout_override' => ['nullable', 'sometimes', Rule::enum(MapLayout::class)],

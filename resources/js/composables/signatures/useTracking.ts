@@ -21,7 +21,8 @@ import { formatBookmarkName } from '@/lib/bookmark';
 import { isWormholeSystem } from '@/lib/solarsystem';
 import { createTracking, updateMapUserSettings, useMapSolarsystems } from '@/map/api';
 import { TLifetimeStatus, TMassStatus, TSignature } from '@/types/models';
-import { computed, ref, watch } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { computed, onMounted, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
 export function useTracking() {
@@ -140,7 +141,7 @@ export function useTracking() {
 
         // If gate connected or prompting is disabled → just create tracking
         if (gate_connected || !map_user_settings.value.prompt_for_signature_enabled) {
-            return createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id);
+            return createTrackingForJump();
         }
 
         // Show the signature dialog even when there are no known signatures
@@ -153,7 +154,7 @@ export function useTracking() {
             // Copy bookmark and create tracking on next tick so the dialog can render.
             setTimeout(() => {
                 copyConnectionBookmark(null, alias);
-                createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id, {
+                createTrackingForJump({
                     signature_id: null,
                     alias,
                     lifetime: 'healthy',
@@ -196,12 +197,45 @@ export function useTracking() {
         show_signature_modal.value = false;
         if (!origin_map_solarsystem.value || !target_solarsystem.value) return;
         copyConnectionBookmark(selection.signatureId, selection.alias);
-        createTracking(origin_map_solarsystem.value.id, target_solarsystem.value.id, {
+        createTrackingForJump({
             signature_id: selection.signatureId,
             alias: selection.alias,
             lifetime: selection.lifetime,
             mass_status: selection.massStatus,
         });
+    }
+
+    function createTrackingForJump(options: {
+        signature_id?: number | null;
+        alias?: string | null;
+        lifetime?: TLifetimeStatus | null;
+        mass_status?: TMassStatus | null;
+    } = {}) {
+        if (!origin_map_solarsystem.value || !target_solarsystem.value) return;
+
+        const targetSolarsystemId = target_solarsystem.value.id;
+
+        return createTracking(origin_map_solarsystem.value.id, targetSolarsystemId, options, {
+            onSuccess: () => selectJumpedSystem(targetSolarsystemId),
+        });
+    }
+
+    function selectJumpedSystem(solarsystem_id: number) {
+        if (!map_user_settings.value.select_jumped_system) return;
+
+        const url = new URL(page.url, window.location.origin);
+        url.searchParams.set('solarsystem_id', String(solarsystem_id));
+
+        router.get(
+            `${url.pathname}${url.search}`,
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                only: ['selected_map_solarsystem'],
+            },
+        );
     }
 
     // Copy the connection bookmark for the system we just jumped into, using the

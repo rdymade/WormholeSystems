@@ -38,6 +38,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property array|null $hidden_cards
  * @property bool $show_threat_level
  * @property bool $show_statics_first
+ * @property bool $select_jumped_system
  * @property bool $is_archived
  * @property string|null $background_image_path
  * @property string|MapBackgroundMode $background_image_mode
@@ -90,6 +91,7 @@ final class MapUserSetting extends Model
             'hidden_cards' => 'array',
             'show_threat_level' => 'boolean',
             'show_statics_first' => 'boolean',
+            'select_jumped_system' => 'boolean',
             'is_archived' => 'boolean',
             'background_image_mode' => MapBackgroundMode::class,
             'layout_override' => MapLayout::class,
