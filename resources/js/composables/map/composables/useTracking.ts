@@ -229,37 +229,7 @@ export function useTracking() {
             },
         );
     }
-
-    // Copy the connection bookmark for the system we just jumped into, using the
-    // same scheme as the connection context menu: the current system labelled
-    // with the signature we used in the origin.
-    function copyConnectionBookmark(signatureId: number | null, alias: string | null) {
-        if (!map_user_settings.value.copy_bookmark_enabled) return;
-        const target = target_solarsystem.value;
-        if (!target) return;
-
-        const signature = signatures.value?.find((s) => s.id === signatureId) ?? null;
-        const name = formatHomeBookmarkName({ alias, solarsystem: target });
- => s.solarsystem_id === solarsystem_id);
-    }
-
-    function handleSelectSignature(selection: {
-        signatureId: number | null;
-        alias: string | null;
-        lifetime: TLifetimeStatus;
-        massStatus: TMassStatus;
-    }) {
-        show_signature_modal.value = false;
-        if (!origin_map_solarsystem.value || !target_solarsystem.value) return;
-        copyConnectionBookmark(selection.signatureId, selection.alias);
-        createTracking(origin_map_solarsystem.value.id, target_solarsystem.value.id, {
-            signature_id: selection.signatureId,
-            alias: selection.alias,
-            lifetime: selection.lifetime,
-            mass_status: selection.massStatus,
-        });
-    }
-
+    
     // Copy the connection bookmark for the system we just jumped into, using the
     // same scheme as the connection context menu: the current system labelled
     // with the signature we used in the origin.
