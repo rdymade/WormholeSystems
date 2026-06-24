@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { map_solarsystems } from '@/composables/map';
 import { useIgnoreList } from '@/composables/useIgnoreList';
 import { usePath } from '@/composables/usePath';
 import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
@@ -28,7 +29,8 @@ const { ignoreSolarsystem, clearIgnoreList, ignored_systems } = useIgnoreList();
 const { map_solarsystems } = useMapSolarsystems();
 const { getAlias } = useSolarsystemAliases(map_solarsystems);
 const { setPath } = usePath();
-const { setWaypoint, setWaypointAll, onlineCharacters } = useWaypoint();
+const { setWaypoint, setWaypointAll } = useWaypoint();
+const { getAlias } = useSolarsystemAliases(map_solarsystems);
 const user = useUser();
 
 const hasRoute = computed(() => props.route && props.route.length > 0);
@@ -116,10 +118,18 @@ function onHover(hovered: boolean) {
                 <!-- Route List -->
                 <div v-if="hasRoute" class="grid max-h-64 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto_auto_auto] overflow-y-auto">
                     <DestinationContextMenu v-for="(solarsystem, index) in route" :key="index" :solarsystem_id="solarsystem.id">
-                        <div
-                            class="col-span-6 grid grid-cols-subgrid items-center gap-x-1.5 border-b border-border/30 px-3 py-0.5 last:border-0 hover:bg-muted/30"
-                        >
-                            <SolarsystemSearchResult :solarsystem="solarsystem" :alias="getAlias(solarsystem.id)" />
+                        <div class="flex items-center gap-1.5 border-b border-border/30 px-3 py-0.5 last:border-0 hover:bg-muted/30">
+                            <SolarsystemClass :solarsystem_class="solarsystem.class" class="shrink-0" />
+                            <span v-if="getAlias(solarsystem.id)" class="shrink-0 font-mono text-[10px] text-muted-foreground">
+                                {{ getAlias(solarsystem.id) }}
+                            </span>
+                            <span class="min-w-0 flex-1 truncate text-xs">{{ solarsystem.name }}</span>
+                            <span class="shrink-0 truncate text-[10px] text-muted-foreground">{{ solarsystem.region?.name }}</span>
+                            <SolarsystemSovereignty :sovereignty="solarsystem.sovereignty" :solarsystem-id="solarsystem.id" class="size-4 shrink-0">
+                                <template #fallback>
+                                    <SolarsystemEffect v-if="solarsystem.effect" :effect="solarsystem.effect.name" />
+                                </template>
+                            </SolarsystemSovereignty>
                             <Tooltip
                                 v-if="
                                     route &&
