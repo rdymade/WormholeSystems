@@ -84,9 +84,9 @@ function nextNatoChildAlias(parentAlias: string, aliases: string[]): string {
 export function guessNextAlias(
     parentAlias: string | null | undefined,
     aliases: string[],
-    options: { targetIsWormhole?: boolean; originIsWormhole?: boolean; connectedAliases?: Array<string | null | undefined> } = {},
+    options: { targetIsWormhole?: boolean; originIsWormhole?: boolean; connectedOutAliases?: Array<string | null | undefined> } = {},
 ): string {
-    const { targetIsWormhole = false, originIsWormhole = false, connectedAliases = [] } = options;
+    const { targetIsWormhole = false, originIsWormhole = false, connectedOutAliases = [] } = options;
     const map_user_settings = useMapUserSettings();
     const concatDisabled = Boolean(map_user_settings.value?.concat_alias_disabled);
     const firstLayerNatoAlias = Boolean(map_user_settings.value?.first_layer_nato_alias);
@@ -111,27 +111,15 @@ export function guessNextAlias(
         return nextNatoChildAlias(parentAlias!.trim(), aliases);
     }
 
-    if (concatDisabled && parentAlias) {
-        const normalizedParentAlias = parentAlias.trim().replace(/-/g, '');
-        const normalizedConnectedAliases = connectedAliases.map((alias) => alias?.trim().replace(/-/g, '') ?? '');
-        const numericConnectedAliases = normalizedConnectedAliases
+    if (concatDisabled) {
+        const numericConnectedOutAliases = connectedOutAliases
+            .map((alias) => alias?.trim() ?? '')
             .filter((alias) => /^\d+$/.test(alias))
             .map((alias) => Number.parseInt(alias, 10));
-        const highestConnectedNumericAlias = numericConnectedAliases.reduce((max, alias) => Math.max(max, alias), 0);
 
-        if (/^\d+$/.test(normalizedParentAlias)) {
-            const parentIndex = Number.parseInt(normalizedParentAlias, 10);
-            const sameAliasConnections = normalizedConnectedAliases.filter((alias) => alias === normalizedParentAlias).length;
-            const hasUnnamedOrNonNumericConnection = normalizedConnectedAliases.some((alias) => alias === '' || !/^\d+$/.test(alias));
+        const highestConnectedNumericAlias = numericConnectedOutAliases.reduce((max, alias) => Math.max(max, alias), 0);
 
-            if (sameAliasConnections === 0 || (sameAliasConnections === 1 && !hasUnnamedOrNonNumericConnection)) {
-                return parentAlias.trim();
-            }
-
-            return `${Math.max(highestConnectedNumericAlias, parentIndex) + 1}`.replace(/(\d{3})(?=\d)/g, '$1-');
-        }
-
-        return `${highestConnectedNumericAlias + 1}`.replace(/(\d{3})(?=\d)/g, '$1-');
+        return String(highestConnectedNumericAlias + 1);
     }
 
     const normalizedParentAlias = concatDisabled && parentAlias ? parentAlias.trim().replace(/-/g, '') : null;
@@ -185,7 +173,7 @@ export function suggestAlias(params: {
     targetIsWormhole: boolean;
     originIsWormhole: boolean;
     aliases: string[];
-    connectedAliases?: Array<string | null | undefined>;
+    connectedOutAliases?: Array<string | null | undefined>;
 }): string | null {
     const originIsAliased = Boolean(params.parentAlias && params.parentAlias.trim());
 
@@ -196,6 +184,6 @@ export function suggestAlias(params: {
     return guessNextAlias(params.parentAlias, params.aliases, {
         targetIsWormhole: params.targetIsWormhole,
         originIsWormhole: params.originIsWormhole,
-        connectedAliases: params.connectedAliases,
+        connectedOutAliases: params.connectedOutAliases,
     });
 }
