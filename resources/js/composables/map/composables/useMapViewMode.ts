@@ -1,12 +1,21 @@
-import { useStorage } from '@vueuse/core';
 import { computed } from 'vue';
+import { mapState } from '../state';
 
 export type TMapLayoutMode = 'manual' | 'tree';
 
-// Module-level singletons so every component (the map, the options pill, …) reads
-// and writes the same persisted value rather than separate, out-of-sync refs.
-const viewMode = useStorage<TMapLayoutMode>('map-view-mode', 'manual');
-const is_tree_layout = computed(() => viewMode.value === 'tree');
+// The map's layout is the shared default a manager sets. When the map allows it, a viewer
+// can override it for themselves (mapState.user_layout_override). The effective mode the
+// rest of the map reacts to is the override when present, otherwise the map default.
+const effective_layout = computed<TMapLayoutMode>(() => {
+    const map = mapState.map;
+    if (!map) return 'manual';
+    if (map.allow_layout_override && mapState.user_layout_override) {
+        return mapState.user_layout_override;
+    }
+    return map.layout;
+});
+
+const is_tree_layout = computed(() => effective_layout.value === 'tree');
 
 /**
  * Auto layouts (the tree view) position nodes for you, so manual dragging and the
@@ -17,5 +26,5 @@ const is_tree_layout = computed(() => viewMode.value === 'tree');
 export const is_layout_locked = is_tree_layout;
 
 export function useMapViewMode() {
-    return { viewMode, is_tree_layout };
+    return { is_tree_layout, effective_layout };
 }

@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\KillmailFilter;
 use App\Enums\LifetimeStatus;
 use App\Enums\MapBackgroundMode;
+use App\Enums\MapLayout;
 use App\Enums\MassStatus;
 use App\Enums\RoutePreference;
 use Carbon\CarbonImmutable;
@@ -93,6 +94,7 @@ final class MapUserSetting extends Model
             'select_jumped_system' => 'boolean',
             'is_archived' => 'boolean',
             'background_image_mode' => MapBackgroundMode::class,
+            'layout_override' => MapLayout::class,
         ];
     }
 }

@@ -1,4 +1,4 @@
-import { applyScale, compareSystems, getConnectionWithSourceAndTarget } from '@/composables/map';
+import { applyScale, compareSystems, getConnectionWithSourceAndTarget, useMapViewMode } from '@/composables/map';
 import { TLayout } from '@/composables/useLayout';
 import { TMap } from '@/pages/maps';
 import { TMapConfig } from '@/types/map';
@@ -6,22 +6,21 @@ import { computed, MaybeRefOrGetter, toValue, watchEffect } from 'vue';
 import { computeTreeLayout } from '../layout/treeLayout';
 import { mapState } from '../state';
 import { Coordinates, TDataMapSolarSystem } from '../types';
-import { TMapLayoutMode } from './useMapViewMode';
 
 export function useCreateMap(
     map: MaybeRefOrGetter<TMap>,
     container: MaybeRefOrGetter<HTMLElement>,
     config: MaybeRefOrGetter<TMapConfig>,
     layout?: MaybeRefOrGetter<TLayout>,
-    layoutMode?: MaybeRefOrGetter<TMapLayoutMode>,
 ) {
+    const { is_tree_layout } = useMapViewMode();
+
     // Base-unit tree positions, recomputed only when the structure changes (systems,
-    // connections, pins, home) — not on every hover / selection / zoom, which keep
-    // the spanning-forest search out of those hot paths.
+    // connections, pins, home, the effective layout mode) — not on every hover / selection /
+    // zoom, which keep the spanning-forest search out of those hot paths.
     const treeLayout = computed<Map<number, Coordinates> | null>(() => {
-        if (toValue(layoutMode) !== 'tree') return null;
         const mapValue = toValue(map);
-        if (!mapValue) return null;
+        if (!mapValue || !is_tree_layout.value) return null;
         return computeTreeLayout(toTreeInput(mapValue), { gridSize: toValue(config).grid_size });
     });
 

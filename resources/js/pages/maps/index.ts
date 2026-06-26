@@ -115,6 +115,8 @@ export type TMap = {
     slug: string;
     home_solarsystem_id: number | null;
     rally_solarsystem_id: number | null;
+    layout: 'manual' | 'tree';
+    allow_layout_override: boolean;
     map_solarsystems: TMapSolarsystem[];
     map_connections: TMapConnection[];
 };
@@ -283,6 +285,8 @@ export type TMapSummary = {
     id: number;
     name: string;
     slug: string;
+    layout: 'manual' | 'tree';
+    allow_layout_override: boolean;
     is_public: boolean;
     role: 'viewer' | 'member' | 'manager' | 'owner' | null;
     map_solarsystems_count: number;

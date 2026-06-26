@@ -17,12 +17,18 @@ import { toast } from 'vue-sonner';
 
 const { scale, setScale } = useMapScale();
 
-const { viewMode } = useMapViewMode();
+const { effective_layout } = useMapViewMode();
 
 const layoutModes: { value: TMapLayoutMode; icon: Component; label: string }[] = [
-    { value: 'manual', icon: Waypoints, label: 'Free layout' },
-    { value: 'tree', icon: Workflow, label: 'Tree layout' },
+    { value: 'manual', icon: Waypoints, label: 'Custom placement' },
+    { value: 'tree', icon: Workflow, label: 'Automatic placement' },
 ];
+
+// A personal override of the map's default placement. Picking the map default clears the
+// override so the viewer follows the map again.
+function setPlacement(mode: TMapLayoutMode) {
+    updateMapUserSettings(map.value.slug, { layout_override: mode === map.value.layout ? null : mode }, ['map_user_settings']);
+}
 
 const map = useMap();
 
@@ -87,23 +93,27 @@ function onDrop(event: DragEvent) {
 
 <template>
     <div class="absolute right-3 bottom-3 z-30 flex items-center gap-0.5 rounded-full bg-white/60 px-1 dark:bg-neutral-800/60">
-        <Tooltip v-for="mode in layoutModes" :key="mode.value" :delay-duration="300">
-            <TooltipTrigger as-child>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    class="h-8 w-8 rounded-full"
-                    :class="
-                        viewMode === mode.value ? 'bg-white text-foreground shadow-sm dark:bg-neutral-700' : 'text-neutral-600 dark:text-neutral-400'
-                    "
-                    @click="viewMode = mode.value"
-                >
-                    <component :is="mode.icon" class="size-4" />
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent>{{ mode.label }}</TooltipContent>
-        </Tooltip>
-        <span class="mx-0.5 h-5 w-px bg-neutral-300/70 dark:bg-neutral-600/70" />
+        <template v-if="map.allow_layout_override">
+            <Tooltip v-for="mode in layoutModes" :key="mode.value" :delay-duration="300">
+                <TooltipTrigger as-child>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        class="h-8 w-8 rounded-full"
+                        :class="
+                            effective_layout === mode.value
+                                ? 'bg-white text-foreground shadow-sm dark:bg-neutral-700'
+                                : 'text-neutral-600 dark:text-neutral-400'
+                        "
+                        @click="setPlacement(mode.value)"
+                    >
+                        <component :is="mode.icon" class="size-4" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>{{ mode.label }}</TooltipContent>
+            </Tooltip>
+            <span class="mx-0.5 h-5 w-px bg-neutral-300/70 dark:bg-neutral-600/70" />
+        </template>
         <Popover>
             <PopoverTrigger as-child>
                 <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full text-neutral-600 dark:text-neutral-400" title="Background Image">
