@@ -20,7 +20,7 @@ import { TCharacter } from '@/types/models';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { useElementSize } from '@vueuse/core';
 import { Flag as FlagIcon, Home as HomeIcon } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue';
 
 const { map_solarsystem, interactive = true } = defineProps<{
     map_solarsystem: TDataMapSolarSystem;
@@ -59,6 +59,7 @@ const effectiveThreatLevel = computed(() => {
 });
 
 const open = ref(false);
+const aliasInputRef = ref<{ focus?: () => void; select?: () => void } | null>(null);
 
 const { is_tree_layout } = useMapViewMode();
 
@@ -104,6 +105,15 @@ const extra_connections_count = computed(() => {
     return Math.max(0, connections_count - mapped_connections_count);
 });
 
+watch(open, (isOpen) => {
+    if (!isOpen) return;
+
+    nextTick(() => {
+        aliasInputRef.value?.focus?.();
+        aliasInputRef.value?.select?.();
+    });
+});
+
 function handleSubmit() {
     form.put(MapSolarsystems.update(map_solarsystem.id).url, {
         onSuccess: () => {
@@ -139,7 +149,7 @@ function handleSubmit() {
                 </PopoverAnchor>
                 <PopoverContent>
                     <form @submit.prevent="handleSubmit" class="grid gap-2">
-                        <Input v-model="form.alias" type="text" placeholder="Alias" class="w-full" />
+                        <Input ref="aliasInputRef" v-model="form.alias" type="text" placeholder="Alias" class="w-full" />
                         <Input v-model="form.occupier_alias" type="text" placeholder="Occupier Alias" class="w-full" />
                         <Button type="submit"> Save</Button>
                     </form>
