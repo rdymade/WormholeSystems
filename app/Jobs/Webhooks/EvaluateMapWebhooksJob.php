@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Jobs\Webhooks;
 
 use App\Enums\MapWebhookType;
+use App\Models\MapAlert;
 use App\Models\MapIgnoredSolarsystem;
-use App\Models\MapWebhook;
-use App\Services\DiscordWebhookService;
+use App\Services\Discord\DiscordDelivery;
+use App\Services\Discord\ProximityAlertEmbed;
 use App\Services\Routing\MapProximityPathfinder;
 use App\Services\Routing\ProximityResult;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -38,15 +39,16 @@ final class EvaluateMapWebhooksJob implements ShouldBeUnique, ShouldQueue
         return $this->map_id.':'.$this->solarsystem_id;
     }
 
-    public function handle(MapProximityPathfinder $pathfinder, DiscordWebhookService $discord): void
+    public function handle(MapProximityPathfinder $pathfinder, ProximityAlertEmbed $embed, DiscordDelivery $delivery): void
     {
-        $webhooks = MapWebhook::query()
+        $alerts = MapAlert::query()
             ->where('map_id', $this->map_id)
             ->where('type', MapWebhookType::Proximity)
             ->where('is_active', true)
+            ->with(['webhook', 'role'])
             ->get();
 
-        if ($webhooks->isEmpty()) {
+        if ($alerts->isEmpty()) {
             return;
         }
 
@@ -55,22 +57,22 @@ final class EvaluateMapWebhooksJob implements ShouldBeUnique, ShouldQueue
             ->pluck('solarsystem_id')
             ->all();
 
-        foreach ($webhooks as $webhook) {
+        foreach ($alerts as $alert) {
             $result = $pathfinder->nearest(
                 [$this->solarsystem_id],
-                $webhook->target_solarsystem_id,
+                $alert->target_solarsystem_id,
                 [],
                 $ignored,
-                $webhook->max_jumps,
+                $alert->max_jumps,
             );
 
             if (! $result instanceof ProximityResult) {
                 continue;
             }
 
-            $discord->sendProximityAlert($webhook, $result);
+            $delivery->deliver($alert, $embed->build($alert, $result));
 
-            $webhook->update(['last_fired_at' => now()]);
+            $alert->update(['last_fired_at' => now()]);
         }
     }
 }
