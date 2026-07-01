@@ -1,14 +1,4 @@
-import {
-    createTracking,
-    formatBookmarkName,
-    formatHomeBookmarkName,
-    getSignatureIdShort,
-    isWormholeSystem,
-    useMapConnections,
-    map_solarsystems,
-    suggestAlias,
-    updateMapUserSettings,
-} from '@/composables/map';
+import { createTracking, formatBookmarkName, formatHomeBookmarkName, isWormholeSystem, useMapConnections, map_solarsystems, suggestAlias, updateMapUserSettings } from '@/composables/map';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useMapIgnoredSystems } from '@/composables/useMapIgnoredSystems';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
@@ -217,7 +207,17 @@ export function useTracking() {
         if (!target) return;
 
         const signature = signatures.value?.find((s) => s.id === signatureId) ?? null;
-        const name = formatHomeBookmarkName({ alias, solarsystem: target });
+        const name = formatHomeBookmarkName(
+            { alias, occupier_alias: existing_map_solarsystem.value?.occupier_alias, solarsystem: target },
+            {
+                signatureId: signature?.signature_id,
+                shipSize: signature?.ship_size,
+                massStatus: signature?.mass_status,
+                lifetime: signature?.lifetime,
+                wormholeCode: signature?.wormhole?.name,
+            },
+            page.props.map,
+        );
 
         navigator.clipboard.writeText(name);
         toast.success('Copied bookmark to clipboard', { description: name });

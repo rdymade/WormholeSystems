@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BulkMapConnectionController;
 use App\Http\Controllers\BulkSignatureController;
 use App\Http\Controllers\BulkWaypointController;
 use App\Http\Controllers\DocumentationController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapAccessController;
 use App\Http\Controllers\MapBackgroundImageController;
+use App\Http\Controllers\MapBookmarkFormatController;
 use App\Http\Controllers\MapConnectionController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\MapIgnoredSolarsystemController;
@@ -84,6 +86,8 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('map-solarsystems', MapSolarsystemController::class)->only(['store', 'update', 'destroy']);
     Route::resource('map-connections', MapConnectionController::class)->only(['store', 'update', 'destroy']);
+    Route::delete('maps/{map}/stale-connections', [BulkMapConnectionController::class, 'destroy'])
+        ->name('maps.stale-connections.destroy');
     Route::put('map-selection', [MapSelectionController::class, 'update'])->name('map-selection.update');
     Route::delete('map-selection', [MapSelectionController::class, 'destroy'])->name('map-selection.destroy');
 
@@ -133,6 +137,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('maps/{map}/background-image', [MapBackgroundImageController::class, 'destroy'])->name('maps.background-image.destroy');
 
     Route::put('maps/{map}/layout', [MapLayoutController::class, 'update'])->name('maps.layout.update');
+
+    Route::put('maps/{map}/bookmark-format', [MapBookmarkFormatController::class, 'update'])->name('maps.bookmark-format.update');
 });
 
 // Public map access (no auth required)

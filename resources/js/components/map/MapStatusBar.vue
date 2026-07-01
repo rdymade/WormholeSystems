@@ -3,7 +3,10 @@ import MapAccessController from '@/actions/App/Http/Controllers/MapAccessControl
 import MapPreferencesController from '@/actions/App/Http/Controllers/MapPreferencesController';
 import MapSettingsController from '@/actions/App/Http/Controllers/MapSettingsController';
 import TrackingIcon from '@/components/icons/TrackingIcon.vue';
+import StaleConnectionsBadge from '@/components/map/StaleConnectionsBadge.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { updateMapUserSettings } from '@/composables/map';
 import { useTracking } from '@/composables/map/composables/useTracking';
@@ -33,6 +36,7 @@ usePing(map);
 
 const character = useActiveMapCharacter();
 const { canEdit, canManageAccess } = usePermission();
+
 const echoStatus = typeof window !== 'undefined' ? useConnectionStatus() : ref<ConnectionStatus>('connected');
 const connectionStatus = computed(() => echoStatus.value);
 
@@ -54,6 +58,29 @@ const {
 } = useTracking();
 
 const targetSolarsystemName = computed(() => target_solarsystem.value?.name || currentSolarsystem.value?.name || null);
+
+// Confirm before leaving layout edit mode so users don't lose unsaved changes by
+// clicking the toggle again instead of Save.
+const showCancelLayoutDialog = ref(false);
+
+function handleLayoutToggle() {
+    if (layout.isEditMode.value && layout.hasUnsavedChanges.value) {
+        showCancelLayoutDialog.value = true;
+        return;
+    }
+    layout.toggleEditMode();
+}
+
+function saveLayoutAndExit() {
+    showCancelLayoutDialog.value = false;
+    layout.saveLayout();
+}
+
+function discardLayoutAndExit() {
+    showCancelLayoutDialog.value = false;
+    layout.revertChanges();
+    layout.toggleEditMode();
+}
 
 // Location visibility toggle
 function handleToggleVisibility() {
@@ -99,30 +126,36 @@ const settingsUrl = computed(() => {
 
 <template>
     <div class="relative flex h-10 shrink-0 items-center gap-2 border-b border-border/50 bg-muted/30 px-2 sm:gap-3 sm:px-3">
-        <!-- Active Character Access Warning (centered, prominent) -->
-        <Tooltip v-if="$page.props.auth.user && !$page.props.active_character_has_access">
-            <TooltipTrigger as-child>
-                <component
-                    :is="canManageAccess ? Link : 'div'"
-                    :href="canManageAccess ? MapAccessController.show(map.slug) : undefined"
-                    class="absolute top-1/2 left-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-yellow-500/40 bg-yellow-500/15 px-3 py-1 text-xs font-medium text-yellow-500 shadow-sm transition-colors hover:bg-yellow-500/25"
-                >
-                    <AlertTriangle class="size-3.5 shrink-0 animate-pulse" />
-                    <span class="whitespace-nowrap">Limited map access</span>
-                </component>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-                <p class="text-xs font-medium text-yellow-500">Limited Access</p>
-                <p class="max-w-xs text-xs text-muted-foreground">
-                    Your active character{{
-                        $page.props.auth.user.active_character?.name ? ` ${$page.props.auth.user.active_character.name}` : ''
-                    }}
-                    is not on this map's access list. You are viewing through another character's access.{{
-                        canManageAccess ? ' Click to manage access.' : ''
-                    }}
-                </p>
-            </TooltipContent>
-        </Tooltip>
+        <!-- Centered info badges -->
+        <div class="absolute top-1/2 left-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2">
+            <!-- Active Character Access Warning -->
+            <Tooltip v-if="$page.props.auth.user && !$page.props.active_character_has_access">
+                <TooltipTrigger as-child>
+                    <component
+                        :is="canManageAccess ? Link : 'div'"
+                        :href="canManageAccess ? MapAccessController.show(map.slug) : undefined"
+                        class="flex items-center gap-1.5 rounded-full border border-yellow-500/40 bg-yellow-500/15 px-3 py-1 text-xs font-medium text-yellow-500 shadow-sm transition-colors hover:bg-yellow-500/25"
+                    >
+                        <AlertTriangle class="size-3.5 shrink-0 animate-pulse" />
+                        <span class="whitespace-nowrap">Limited map access</span>
+                    </component>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                    <p class="text-xs font-medium text-yellow-500">Limited Access</p>
+                    <p class="max-w-xs text-xs text-muted-foreground">
+                        Your active character{{
+                            $page.props.auth.user.active_character?.name ? ` ${$page.props.auth.user.active_character.name}` : ''
+                        }}
+                        is not on this map's access list. You are viewing through another character's access.{{
+                            canManageAccess ? ' Click to manage access.' : ''
+                        }}
+                    </p>
+                </TooltipContent>
+            </Tooltip>
+
+            <!-- Stale Connections Cleanup -->
+            <StaleConnectionsBadge />
+        </div>
 
         <!-- Map Name -->
         <div class="flex items-center gap-2">
@@ -259,7 +292,7 @@ const settingsUrl = computed(() => {
         <Tooltip>
             <TooltipTrigger as-child>
                 <button
-                    @click="layout.toggleEditMode()"
+                    @click="handleLayoutToggle"
                     class="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs transition-colors sm:px-2"
                     :class="
                         layout.isEditMode.value
@@ -297,4 +330,23 @@ const settingsUrl = computed(() => {
         :suggested-alias="suggested_alias"
         @select-signature="handleSelectSignature"
     />
+
+    <!-- Leave Layout Editing Confirmation -->
+    <Dialog v-model:open="showCancelLayoutDialog">
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Save your layout changes?</DialogTitle>
+                <DialogDescription>
+                    You have unsaved layout changes. Save them, discard them and revert to your last saved layout, or keep editing.
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter class="gap-2 sm:justify-between">
+                <Button variant="outline" @click="showCancelLayoutDialog = false">Keep editing</Button>
+                <div class="flex gap-2">
+                    <Button variant="destructive" @click="discardLayoutAndExit">Discard</Button>
+                    <Button @click="saveLayoutAndExit">Save</Button>
+                </div>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>

@@ -4,6 +4,7 @@ import { TMapConfig } from '@/types/map';
 import {
     TAudit,
     TCharacter,
+    TConnectionType,
     TKillmail,
     TLifetimeStatus,
     TMapRouteSolarsystem,
@@ -117,6 +118,8 @@ export type TMap = {
     rally_solarsystem_id: number | null;
     layout: 'manual' | 'tree';
     allow_layout_override: boolean;
+    bookmark_format_wormhole: string;
+    bookmark_format_kspace: string;
     map_solarsystems: TMapSolarsystem[];
     map_connections: TMapConnection[];
 };
@@ -197,6 +200,8 @@ export type TMapConnection = {
     id: number;
     from_map_solarsystem_id: number;
     to_map_solarsystem_id: number;
+    type: TConnectionType;
+    preserve_mass: boolean;
     mass_status: TMassStatus;
     lifetime_status: TLifetimeStatus;
     lifetime_status_updated_at: string | null;
@@ -287,6 +292,8 @@ export type TMapSummary = {
     slug: string;
     layout: 'manual' | 'tree';
     allow_layout_override: boolean;
+    bookmark_format_wormhole: string;
+    bookmark_format_kspace: string;
     is_public: boolean;
     role: 'viewer' | 'member' | 'manager' | 'owner' | null;
     map_solarsystems_count: number;
