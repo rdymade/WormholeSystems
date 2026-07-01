@@ -137,8 +137,10 @@ function handleSubmit() {
         @drag.prevent
     >
         <div class="row-start-1 grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">
-            <span class="mr-1 inline-block" v-if="map_solarsystem.alias">{{ map_solarsystem.alias }}</span>
-            <SolarsystemClass :solarsystem_class="resolvedSolarsystem.class" />
+            <div class="col-start-1 row-start-1 flex min-w-0 items-center gap-1">
+                <span v-if="map_solarsystem.alias" class="truncate">{{ map_solarsystem.alias }}</span>
+                <SolarsystemClass :solarsystem_class="resolvedSolarsystem.class" />
+            </div>
             <Popover :open="open" @update:open="(value) => open && (open = value)">
                 <PopoverAnchor class="col-start-2 row-start-1 min-w-0">
                     <SolarsystemName :map_solarsystem="system" :truncate="fixedWidth" />
