@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'layout', 'sort_preferences']);
+        $middleware->trimStrings(except: [
+            'bookmark_format_wormhole',
+            'bookmark_format_kspace',
+        ]);
 
         $middleware->web(append: [
             HandleAppearance::class,

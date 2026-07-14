@@ -94,15 +94,17 @@ export function getBookmarkTokenValues(system: BookmarkSystem, context: TBookmar
 }
 
 /**
- * Substitute `{token}` placeholders in a template, dropping tokens that resolve
- * to an empty value and collapsing the whitespace they leave behind. Unknown
- * placeholders are left untouched.
+ * Substitute `{token}` placeholders in a template. Unknown placeholders are
+ * left untouched. Leading whitespace is preserved exactly as configured, while
+ * the remaining whitespace is collapsed so empty tokens do not leave gaps.
  */
 export function renderBookmarkTemplate(template: string, values: Record<TBookmarkToken, string>): string {
-    return template
-        .replace(/\{(\w+)\}/g, (match, token: string) => (token in values ? values[token as TBookmarkToken] : match))
-        .replace(/\s+/g, ' ')
-        .trim();
+    const rendered = template
+        .replace(/\{(\w+)\}/g, (match, token: string) => (token in values ? values[token as TBookmarkToken] : match));
+
+    const leadingWhitespace = rendered.match(/^\s*/)?.[0] ?? '';
+
+    return leadingWhitespace + rendered.slice(leadingWhitespace.length).replace(/\s+/g, ' ').trim();
 }
 
 /**

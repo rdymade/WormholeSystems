@@ -94,3 +94,14 @@ it('accepts a format with literal text around known tokens', function () {
 
     expect($map->fresh()->bookmark_format_wormhole)->toBe('[{alias}] {sig}');
 });
+
+it('preserves leading whitespace when saving bookmark formats', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Manager))
+        ->put("/maps/{$map->slug}/bookmark-format", ['bookmark_format_wormhole' => '   {alias} {sig}'])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect($map->fresh()->bookmark_format_wormhole)->toBe('   {alias} {sig}');
+});
