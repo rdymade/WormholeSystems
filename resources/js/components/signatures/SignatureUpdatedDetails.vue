@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { TProcessedConnection } from '@/composables/map';
+import type { TProcessedConnection } from '@/map/api';
 import { useNowUTC } from '@/composables/useNowUTC';
 import { TSignature } from '@/types/models';
 import { UTCDate } from '@date-fns/utc';

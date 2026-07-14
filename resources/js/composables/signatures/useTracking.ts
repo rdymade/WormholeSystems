@@ -1,15 +1,3 @@
-import {
-    createMapSolarsystem,
-    createTracking,
-    formatBookmarkName,
-    formatHomeBookmarkName,
-    getSignatureIdShort,
-    isWormholeSystem,
-    map_solarsystems,
-    suggestAlias,
-    updateMapUserSettings,
-} from '@/composables/map';
-import { getSecurityClass } from '@/composables/map/utils/security';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
 import { useMapIgnoredSystems } from '@/composables/useMapIgnoredSystems';
 import { useMapUserSettings } from '@/composables/useMapUserSettings';
@@ -19,7 +7,7 @@ import { useTrackingSystems } from '@/composables/useTrackingSystems';
 import { suggestAlias } from '@/lib/alias';
 import { formatBookmarkName } from '@/lib/bookmark';
 import { isWormholeSystem } from '@/lib/solarsystem';
-import { createTracking, updateMapUserSettings, useMapSolarsystems } from '@/map/api';
+import { createMapSolarsystem, createTracking, updateMapUserSettings, useMapSolarsystems } from '@/map/api';
 import { TLifetimeStatus, TMassStatus, TSignature } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -31,6 +19,8 @@ export function useTracking() {
     const { isIgnored } = useMapIgnoredSystems();
     const page = useShowMap();
     const { staticData } = useStaticData();
+    const { map_solarsystems } = useMapSolarsystems();
+    const map_connections = computed(() => page.props.map.map_connections ?? []);
 
     const is_tracking = computed(() => map_user_settings.value?.is_tracking && character.value && map_user_settings.value?.tracking_allowed);
     const is_tracking_allowed = computed(() => map_user_settings.value.tracking_allowed);
@@ -120,11 +110,6 @@ export function useTracking() {
         if (a.map_connection_id && !b.map_connection_id) return 1;
         if (!a.map_connection_id && b.map_connection_id) return -1;
         return a.signature_id?.localeCompare(b.signature_id);
-    }
-
-    function getTargetSolarsystemClass(system: TSolarsystem): TSolarsystemClass {
-        if (system.class) return system.class;
-        return getSecurityClass(system.security);
     }
 
     function isPossibleSignature(signature: TSignature): boolean {
@@ -247,7 +232,18 @@ export function useTracking() {
         if (!target) return;
 
         const signature = signatures.value?.find((s) => s.id === signatureId) ?? null;
-        const name = formatHomeBookmarkName({ alias, solarsystem: target });
+        const name = formatBookmarkName(
+            { alias, occupier_alias: existing_map_solarsystem.value?.occupier_alias, solarsystem: target },
+            {
+                signatureId: signature?.signature_id,
+                shipSize: signature?.ship_size,
+                massStatus: signature?.mass_status,
+                lifetime: signature?.lifetime,
+                wormholeCode: signature?.wormhole?.name,
+            },
+            true,
+            page.props.map,
+        );
 
         navigator.clipboard.writeText(name);
         toast.success('Copied bookmark to clipboard', { description: name });

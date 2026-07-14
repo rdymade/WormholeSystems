@@ -138,7 +138,7 @@ function handleSubmit() {
     >
         <div class="row-start-1 grid grid-cols-[auto_1fr_auto] items-center justify-center gap-x-1 px-2">
             <div class="col-start-1 row-start-1 flex min-w-0 items-center gap-1">
-                <span v-if="map_solarsystem.alias" class="truncate">{{ map_solarsystem.alias }}</span>
+                <span v-if="system.alias" class="truncate">{{ system.alias }}</span>
                 <SolarsystemClass :solarsystem_class="resolvedSolarsystem.class" />
             </div>
             <Popover :open="open" @update:open="(value) => open && (open = value)">

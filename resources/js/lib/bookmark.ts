@@ -110,10 +110,35 @@ export function renderBookmarkTemplate(template: string, values: Record<TBookmar
  * templates (falling back to the defaults). `context` carries the connection
  * data the template can reference (signature id, size, mass, lifetime, code).
  */
-export function formatBookmarkName(system: BookmarkSystem, context: TBookmarkContext, formats?: TBookmarkFormats | null): string {
+export function formatBookmarkName(system: BookmarkSystem, context: TBookmarkContext, homeBookmark: boolean, formats?: TBookmarkFormats | null): string {
     const template = isWormholeClass(system.solarsystem.class)
         ? formats?.bookmark_format_wormhole || DEFAULT_BOOKMARK_FORMAT_WORMHOLE
         : formats?.bookmark_format_kspace || DEFAULT_BOOKMARK_FORMAT_KSPACE;
 
-    return renderBookmarkTemplate(template, getBookmarkTokenValues(system, context));
+    const bookmarkName = renderBookmarkTemplate(template, getBookmarkTokenValues(system, context));
+
+    if(homeBookmark) {
+        return `  **${bookmarkName}`;
+    } else {
+        return ` ${bookmarkName}`;
+    }
+
+}
+
+
+/**
+ * Build the connection bookmark name for the home connection.
+ *
+ * Wormhole systems read "alias sig class"; k-space systems read
+ * "alias class sig name region".
+ */
+export function formatHomeBookmarkName(system: BookmarkSystem): string {
+    const class_string = getBookmarkClassString(system.solarsystem);
+
+    const parts: string[] = [];
+    parts.push("  **");
+
+    parts.push(system.alias?system.alias:system.solarsystem.name);
+    parts.push(class_string);
+    return parts.join(' ');
 }

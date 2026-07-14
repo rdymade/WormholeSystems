@@ -33,6 +33,7 @@ const source_name = computed(() =>
             lifetime: map_connection.lifetime_status,
             wormholeCode: target_signature.value?.wormhole?.name,
         },
+        false,
         store.meta.value,
     ),
 );
@@ -47,6 +48,7 @@ const target_name = computed(() =>
             lifetime: map_connection.lifetime_status,
             wormholeCode: source_signature.value?.wormhole?.name,
         },
+        false,
         store.meta.value,
     ),
 );

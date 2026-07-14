@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { map_solarsystems } from '@/composables/map';
 import { useIgnoreList } from '@/composables/useIgnoreList';
 import { usePath } from '@/composables/usePath';
 import { useSolarsystemAliases } from '@/composables/useSolarsystemAliases';
@@ -29,8 +28,7 @@ const { ignoreSolarsystem, clearIgnoreList, ignored_systems } = useIgnoreList();
 const { map_solarsystems } = useMapSolarsystems();
 const { getAlias } = useSolarsystemAliases(map_solarsystems);
 const { setPath } = usePath();
-const { setWaypoint, setWaypointAll } = useWaypoint();
-const { getAlias } = useSolarsystemAliases(map_solarsystems);
+const { setWaypoint, setWaypointAll, onlineCharacters } = useWaypoint();
 const user = useUser();
 
 const hasRoute = computed(() => props.route && props.route.length > 0);
