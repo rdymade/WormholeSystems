@@ -117,7 +117,7 @@ export function useTracking() {
     function performJump() {
         if (existing_connection.value?.map_connection_id) return;
         const gate_connected = isGateConnected(origin_map_solarsystem.value?.solarsystem_id, target_solarsystem.value?.id);
-        if (gate_connected || !possible_signatures.value.length || !map_user_settings.value.prompt_for_signature_enabled) {
+        if (gate_connected || !map_user_settings.value.prompt_for_signature_enabled) {
             return createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id);
         }
 
