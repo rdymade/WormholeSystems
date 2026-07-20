@@ -57,6 +57,55 @@ function isNatoAlias(alias: string | null | undefined): boolean {
     return FIRST_LAYER_NATO_ALIASES.includes(alias.trim());
 }
 
+function normalizeAlias(alias: string): string {
+    return alias.trim().toUpperCase().replace(/-/g, '');
+}
+
+function uniqueAlias(candidate: string, aliases: string[]): string {
+    const existing = new Set(aliases.map((alias) => normalizeAlias(alias)));
+    const normalizedCandidate = normalizeAlias(candidate);
+
+    if (!existing.has(normalizedCandidate)) {
+        return candidate;
+    }
+
+    const candidateUpper = candidate.trim().toUpperCase();
+    const natoIndex = FIRST_LAYER_NATO_ALIASES.indexOf(candidateUpper);
+
+    if (natoIndex >= 0) {
+        for (let i = natoIndex + 1; i < FIRST_LAYER_NATO_ALIASES.length; i += 1) {
+            const word = FIRST_LAYER_NATO_ALIASES[i];
+            if (!existing.has(normalizeAlias(word))) {
+                return word;
+            }
+        }
+
+        let suffix = 1;
+        while (existing.has(normalizeAlias(`ZULU${suffix}`))) {
+            suffix += 1;
+        }
+        return `ZULU${suffix}`;
+    }
+
+    const normalized = candidate.trim().replace(/-/g, '');
+    const match = normalized.match(/^(.*?)(\d+)$/);
+
+    if (match) {
+        const [, prefix, indexText] = match;
+        let index = Number.parseInt(indexText, 10);
+        do {
+            index += 1;
+        } while (existing.has(normalizeAlias(`${prefix}${index}`)));
+        return `${prefix}${index}`;
+    }
+
+    let suffix = 1;
+    while (existing.has(normalizeAlias(`${normalized}${suffix}`))) {
+        suffix += 1;
+    }
+    return `${normalized}${suffix}`;
+}
+
 function nextNatoChildAlias(parentAlias: string, aliases: string[]): string {
     const letter = parentAlias.trim().charAt(0).toUpperCase();
     // Support existing aliases that use hyphen separators (e.g. A123-1)
@@ -95,20 +144,11 @@ export function guessNextAlias(
     const normalizedPrefix = prefix.replace(/-/g, '');
 
     if (firstLayerNatoAlias && isTopLevelAlias(parentAlias)) {
-        return nextNatoAlias(aliases);
+        return uniqueAlias(nextNatoAlias(aliases), aliases);
     }
 
     if (firstLayerNatoAlias && isNatoAlias(parentAlias ?? null)) {
-        const numericChildren = aliases.filter((alias) => {
-            const match = alias.trim().toUpperCase().match(new RegExp(`^${parentAlias!.trim().charAt(0).toUpperCase()}(\\d+)$`));
-            return Boolean(match);
-        });
-
-        if (originIsWormhole && targetIsWormhole && numericChildren.length === 0) {
-            return parentAlias!.trim();
-        }
-
-        return nextNatoChildAlias(parentAlias!.trim(), aliases);
+        return uniqueAlias(nextNatoChildAlias(parentAlias!.trim(), aliases), aliases);
     }
 
     if (concatDisabled) {
@@ -119,7 +159,7 @@ export function guessNextAlias(
 
         const highestConnectedNumericAlias = numericConnectedOutAliases.reduce((max, alias) => Math.max(max, alias), 0);
 
-        return String(highestConnectedNumericAlias + 1);
+        return uniqueAlias(String(highestConnectedNumericAlias + 1), aliases);
     }
 
     const normalizedParentAlias = concatDisabled && parentAlias ? parentAlias.trim().replace(/-/g, '') : null;
@@ -158,7 +198,7 @@ export function guessNextAlias(
     }, 0);
 
     const result = `${prefix}${highest + 1}`;
-    return result.replace(/(\d{3})(?=\d)/g, '$1-');
+    return uniqueAlias(result.replace(/(\d{3})(?=\d)/g, '$1-'), aliases);
 }
 
 /**
