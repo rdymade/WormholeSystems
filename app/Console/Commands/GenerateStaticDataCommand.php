@@ -59,6 +59,20 @@ final class GenerateStaticDataCommand extends Command
     protected $description = 'Generate static data files for client-side routing';
 
     /**
+     * Index into the six-entry effect strength arrays (C1-C6). Drifter systems
+     * carry C2-strength effects and the C13 small-ship shattered systems
+     * C6-strength ones; their raw classes would index out of bounds.
+     */
+    public static function effectStrengthIndex(int $class): int
+    {
+        return match (true) {
+            $class >= 14 && $class <= 18 => 1,
+            $class === 13 => 5,
+            default => $class - 1,
+        };
+    }
+
+    /**
      * @throws JsonException
      * @throws Throwable
      */
@@ -353,7 +367,7 @@ final class GenerateStaticDataCommand extends Command
     }
 
     /**
-     * @return array<int, array{class: int, effect: string|null, statics: string[]}>
+     * @return array<int, array{class: int, effect: string|null, statics: string[], shattered: bool}>
      */
     private function loadWormholeSystemsById(): array
     {
@@ -386,6 +400,7 @@ final class GenerateStaticDataCommand extends Command
                 'statics' => $staticsValue === ''
                     ? []
                     : array_values(array_filter(array_map(mb_trim(...), explode(',', $staticsValue)))),
+                'shattered' => mb_trim((string) $row[$indexByColumn['shattered']]) !== '',
             ];
         }
 
@@ -427,7 +442,7 @@ final class GenerateStaticDataCommand extends Command
      * @param  array<int, array{id: int, name: string, type: string, region_id: int, region: array{id: int, name: string}}>  $constellationsById
      * @param  array<int, int[]>  $solarsystemServices
      * @param  array<int, bool>  $solarsystemHasStations
-     * @param  array<int, array{class: int, effect: string|null, statics: string[]}>  $wormholeSystemsById
+     * @param  array<int, array{class: int, effect: string|null, statics: string[], shattered: bool}>  $wormholeSystemsById
      * @param  array<string, array<string, mixed>>  $wormholesByName
      * @param  array<string, array<string, mixed>>  $wormholeEffectsByName
      * @param  array<string, true>  $joveObservatorySystems
@@ -459,7 +474,7 @@ final class GenerateStaticDataCommand extends Command
 
             $security = CCPRounding::roundSecurity($solarsystemRow->securityStatus);
 
-            $solarsystems[] = [
+            $entry = [
                 'id' => $solarsystemRow->id,
                 'name' => $solarsystemRow->name,
                 'region_id' => $solarsystemRow->regionId,
@@ -484,6 +499,12 @@ final class GenerateStaticDataCommand extends Command
                 'effect' => $this->getWormholeEffectsFromData($wormholeSystem, $wormholeEffectsByName),
                 'position2D' => $this->getPosition2dArrayFromRow($solarsystemRow),
             ];
+
+            if ($wormholeSystem['shattered'] ?? false) {
+                $entry['is_shattered'] = true;
+            }
+
+            $solarsystems[] = $entry;
         }
 
         usort($solarsystems, static fn (array $a, array $b): int => $a['id'] <=> $b['id']);
@@ -492,7 +513,7 @@ final class GenerateStaticDataCommand extends Command
     }
 
     /**
-     * @param  array{class: int, effect: string|null, statics: string[]}|null  $wormholeSystem
+     * @param  array{class: int, effect: string|null, statics: string[], shattered: bool}|null  $wormholeSystem
      * @param  array<string, array<string, mixed>>  $wormholesByName
      * @return array<int, array<string, mixed>>|null
      */
@@ -530,7 +551,7 @@ final class GenerateStaticDataCommand extends Command
     }
 
     /**
-     * @param  array{class: int, effect: string|null, statics: string[]}|null  $wormholeSystem
+     * @param  array{class: int, effect: string|null, statics: string[], shattered: bool}|null  $wormholeSystem
      * @param  array<string, array<string, mixed>>  $wormholeEffectsByName
      */
     private function getWormholeEffectsFromData(?array $wormholeSystem, array $wormholeEffectsByName): ?array
@@ -547,7 +568,7 @@ final class GenerateStaticDataCommand extends Command
 
         ['Buffs' => $buffs, 'Debuffs' => $debuffs] = $effects;
 
-        $strength = $wormholeSystem['class'] - 1;
+        $strength = self::effectStrengthIndex($wormholeSystem['class']);
 
         $buffValues = collect($buffs)
             ->map(static fn (array $strengths, string $name): array => [

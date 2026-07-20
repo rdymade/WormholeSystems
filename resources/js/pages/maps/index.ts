@@ -142,6 +142,8 @@ export type TSolarsystem = {
     sovereignty: TSovereignty | null;
     statics: TStatic[] | null;
     effect: TEffect | null;
+    /** Present and true for shattered wormhole systems. */
+    is_shattered?: boolean;
     connection_type?: 'stargate' | 'wormhole' | 'evescout' | null;
 };
 
@@ -235,7 +237,6 @@ export type TWormhole = {
     name: string;
     total_mass: number;
     maximum_jump_mass: number;
-    ship_size: string;
     maximum_lifetime: number;
     leads_to: string;
     signature_strength: number | null;

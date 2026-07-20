@@ -6,9 +6,10 @@ import { useStaticData } from '@/composables/useStaticData';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
 import { suggestAlias } from '@/lib/alias';
 import { formatBookmarkName } from '@/lib/bookmark';
+import { groupSignatureOptions } from '@/lib/signatureCompatibility';
 import { isWormholeSystem } from '@/lib/solarsystem';
 import { createMapSolarsystem, createTracking, updateMapUserSettings, useMapSolarsystems } from '@/map/api';
-import { TLifetimeStatus, TMassStatus, TSignature } from '@/types/models';
+import { TLifetimeStatus, TMassStatus, TShipSize, TSignature } from '@/types/models';
 import { router } from '@inertiajs/vue3';
 import { computed, onMounted, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
@@ -29,7 +30,10 @@ export function useTracking() {
     const { origin_map_solarsystem, target_solarsystem, update } = useTrackingSystems();
 
     const show_signature_modal = ref(false);
-    const signatures = computed(() => origin_map_solarsystem.value?.signatures?.toSorted(sortSignatures).filter(isPossibleSignature));
+    // All of the origin's signatures; the dialog demotes the ones that cannot
+    // lead to the target instead of hiding them.
+    const signatures = computed(() => origin_map_solarsystem.value?.signatures?.toSorted(sortSignatures));
+    const possible_signatures = computed(() => groupSignatureOptions(signatures.value ?? [], target_solarsystem.value?.class).likely);
     const existing_map_solarsystem = computed(() => map_solarsystems.value.find((s) => s.solarsystem_id === target_solarsystem.value?.id));
     const existing_connection = computed(() => {
         if (!existing_map_solarsystem.value) return null;
@@ -107,26 +111,14 @@ export function useTracking() {
 
     function sortSignatures(a: TSignature, b: TSignature) {
         if (!a.signature_id || !b.signature_id) return 0;
-        if (a.map_connection_id && !b.map_connection_id) return 1;
-        if (!a.map_connection_id && b.map_connection_id) return -1;
-        return a.signature_id?.localeCompare(b.signature_id);
-    }
-
-    function isPossibleSignature(signature: TSignature): boolean {
-        if (!signature.signature_type_id) return true;
-        if (!target_solarsystem.value) return true;
-        const solarsystem_class = target_solarsystem.value.class;
-        if (signature.signature_type?.target_class === solarsystem_class) return true;
-        return signature.signature_type?.target_class === null;
+        return a.signature_id.localeCompare(b.signature_id);
     }
 
     function performJump() {
         if (existing_connection.value?.map_connection_id) return;
         const gate_connected = isGateConnected(origin_map_solarsystem.value?.solarsystem_id, target_solarsystem.value?.id);
-
-        // If gate connected or prompting is disabled → just create tracking
-        if (gate_connected || !map_user_settings.value.prompt_for_signature_enabled) {
-            return createTrackingForJump();
+        if (gate_connected || !possible_signatures.value.length || !map_user_settings.value.prompt_for_signature_enabled) {
+            return createTracking(origin_map_solarsystem.value!.id, target_solarsystem.value!.id);
         }
 
         // Show the signature dialog even when there are no known signatures
@@ -178,6 +170,7 @@ export function useTracking() {
         alias: string | null;
         lifetime: TLifetimeStatus;
         massStatus: TMassStatus;
+        shipSize: TShipSize | null;
     }) {
         show_signature_modal.value = false;
         if (!origin_map_solarsystem.value || !target_solarsystem.value) return;
@@ -187,6 +180,7 @@ export function useTracking() {
             alias: selection.alias,
             lifetime: selection.lifetime,
             mass_status: selection.massStatus,
+            ship_size: selection.shipSize,
         });
     }
 
@@ -195,6 +189,7 @@ export function useTracking() {
         alias?: string | null;
         lifetime?: TLifetimeStatus | null;
         mass_status?: TMassStatus | null;
+        ship_size?: TShipSize | null;
     } = {}) {
         if (!origin_map_solarsystem.value || !target_solarsystem.value) return;
 

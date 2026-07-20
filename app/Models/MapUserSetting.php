@@ -30,7 +30,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|KillmailFilter $killmail_filter
  * @property CarbonImmutable|string|null $introduction_confirmed_at
  * @property bool $prompt_for_signature_enabled
+<<<<<<< HEAD
  * @property bool $auto_confirm_signatures
+=======
+ * @property bool $preselect_signature_enabled
+>>>>>>> origin/main
  * @property bool $suggest_alias_enabled
  * @property bool $concat_alias_disabled
  * @property bool $copy_bookmark_enabled
@@ -40,6 +44,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $show_statics_first
  * @property bool $select_jumped_system
  * @property bool $is_archived
+ * @property bool $is_pinned
  * @property string|null $background_image_path
  * @property string|MapBackgroundMode $background_image_mode
  * @property CarbonImmutable|string $created_at
@@ -84,6 +89,7 @@ final class MapUserSetting extends Model
             'prompt_for_signature_enabled' => 'boolean',
             'auto_confirm_signatures' => 'boolean',
             'first_layer_nato_alias' => 'boolean',
+            'preselect_signature_enabled' => 'boolean',
             'suggest_alias_enabled' => 'boolean',
             'concat_alias_disabled' => 'boolean',
             'copy_bookmark_enabled' => 'boolean',
@@ -93,6 +99,7 @@ final class MapUserSetting extends Model
             'show_statics_first' => 'boolean',
             'select_jumped_system' => 'boolean',
             'is_archived' => 'boolean',
+            'is_pinned' => 'boolean',
             'background_image_mode' => MapBackgroundMode::class,
             'layout_override' => MapLayout::class,
         ];

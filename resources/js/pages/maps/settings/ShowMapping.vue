@@ -2,18 +2,20 @@
 import MapUserSettingController from '@/actions/App/Http/Controllers/MapUserSettingController';
 import PlusIcon from '@/components/icons/PlusIcon.vue';
 import BookmarkFormatCard from '@/components/map/BookmarkFormatCard.vue';
-import SolarsystemEffect from '@/components/map/SolarsystemEffect.vue';
 import SolarsystemClass from '@/components/solarsystem/SolarsystemClass.vue';
+import VirtualizedSolarsystemList from '@/components/solarsystem/VirtualizedSolarsystemList.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Combobox, ComboboxAnchor, ComboboxEmpty, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox';
+import { Combobox, ComboboxAnchor, ComboboxInput } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useMapIgnoredSystems } from '@/composables/useMapIgnoredSystems';
 import usePermission from '@/composables/usePermission';
 import { useStaticData } from '@/composables/useStaticData';
 import SettingsLayout from '@/layouts/SettingsLayout.vue';
+import { type TComboboxSection } from '@/lib/comboboxSections';
+import { MAX_SEARCH_RESULTS, takeRanked } from '@/lib/searchRank';
 import { TMapSummary } from '@/pages/maps';
 import { TMapUserSetting } from '@/types/models';
 import { TStaticSolarsystem } from '@/types/static-data';
@@ -57,6 +59,12 @@ function handleToggleActiveTracking(value: boolean | 'indeterminate') {
 function handlePromptForSignatureChange(value: boolean | 'indeterminate') {
     if (typeof value === 'boolean') {
         updateMapUserSettings({ prompt_for_signature_enabled: value });
+    }
+}
+
+function handlePreselectSignatureChange(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ preselect_signature_enabled: value });
     }
 }
 
@@ -105,12 +113,30 @@ const filteredSolarsystems = computed(() => {
         return [] as TStaticSolarsystem[];
     }
 
-    return solarsystems.value.filter((solarsystem) => solarsystem.name.toLowerCase().includes(query)).slice(0, 25);
+    return takeRanked(
+        solarsystems.value,
+        query,
+        MAX_SEARCH_RESULTS,
+        (solarsystem) => [solarsystem.name],
+        (solarsystem) => solarsystem.name,
+    );
 });
 
-const new_solarsystems = computed(() => filteredSolarsystems.value.filter((solarsystem) => !map_ignored_systems.includes(solarsystem.id)));
+const ignoredIds = computed(() => new Set(map_ignored_systems));
 
-const existing_solarsystems = computed(() => filteredSolarsystems.value.filter((solarsystem) => map_ignored_systems.includes(solarsystem.id)));
+const search_sections = computed<TComboboxSection<TStaticSolarsystem>[]>(() => {
+    const new_solarsystems: TStaticSolarsystem[] = [];
+    const existing_solarsystems: TStaticSolarsystem[] = [];
+
+    for (const solarsystem of filteredSolarsystems.value) {
+        (ignoredIds.value.has(solarsystem.id) ? existing_solarsystems : new_solarsystems).push(solarsystem);
+    }
+
+    return [
+        { key: 'new', heading: 'Search Results', items: new_solarsystems },
+        { key: 'ignored', heading: 'Already Ignored', items: existing_solarsystems, selectable: false },
+    ];
+});
 
 function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
     ignoreSolarsystem(solarsystem.id, {
@@ -158,6 +184,16 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                             :model-value="map_user_settings.prompt_for_signature_enabled"
                             @update:model-value="handlePromptForSignatureChange"
                         />
+                    </div>
+
+                    <div class="flex items-center justify-between" v-if="map_user_settings.prompt_for_signature_enabled">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Preselect First Signature</Label>
+                            <div class="text-sm text-muted-foreground">
+                                Pre-select the first likely signature in the jump prompt, so working through holes alphabetically only takes Enter
+                            </div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.preselect_signature_enabled" @update:model-value="handlePreselectSignatureChange" />
                     </div>
 
                     <div class="flex items-center justify-between">
@@ -234,57 +270,16 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                                 <DialogTitle>Add Ignored System</DialogTitle>
                                 <DialogDescription>Search for a solar system to exclude it from auto-mapping.</DialogDescription>
                             </DialogHeader>
-                            <Combobox class="rounded-lg border bg-neutral-900">
+                            <Combobox class="rounded-lg border bg-neutral-900" :ignore-filter="true">
                                 <ComboboxAnchor>
                                     <ComboboxInput v-model="search" auto-focus />
                                 </ComboboxAnchor>
-                                <ComboboxList class="w-115" align="start">
-                                    <ComboboxEmpty>No results found</ComboboxEmpty>
-                                    <ComboboxGroup heading="Search Results" v-if="new_solarsystems.length > 0" class="grid grid-cols-[auto_1fr_auto]">
-                                        <ComboboxItem
-                                            v-for="solarsystem in new_solarsystems"
-                                            :key="solarsystem.id"
-                                            :value="solarsystem.name"
-                                            @select.prevent="() => handleSolarsystemSelect(solarsystem)"
-                                            class="col-span-full grid grid-cols-subgrid"
-                                        >
-                                            <div class="justify-self-center">
-                                                <SolarsystemClass :solarsystem_class="solarsystem.class" :name="solarsystem.name" />
-                                            </div>
-                                            <span class="whitespace-nowrap">{{ solarsystem.name }}</span>
-                                            <span class="truncate text-muted-foreground" v-if="!solarsystem.class">{{
-                                                solarsystem.region?.name
-                                            }}</span>
-                                            <div class="justify-self-end" v-else-if="solarsystem.effect">
-                                                <SolarsystemEffect :effect="solarsystem.effect" />
-                                            </div>
-                                        </ComboboxItem>
-                                    </ComboboxGroup>
-                                    <ComboboxGroup
-                                        heading="Already Ignored"
-                                        v-if="existing_solarsystems.length > 0"
-                                        class="grid grid-cols-[auto_1fr_auto]"
-                                    >
-                                        <ComboboxItem
-                                            v-for="solarsystem in existing_solarsystems"
-                                            :key="solarsystem.id"
-                                            :value="solarsystem.name"
-                                            class="col-span-full grid grid-cols-subgrid"
-                                            disabled
-                                        >
-                                            <div class="justify-self-center">
-                                                <SolarsystemClass :solarsystem_class="solarsystem.class" :name="solarsystem.name" />
-                                            </div>
-                                            <span class="whitespace-nowrap">{{ solarsystem.name }}</span>
-                                            <span class="truncate text-muted-foreground" v-if="!solarsystem.class">{{
-                                                solarsystem.region?.name
-                                            }}</span>
-                                            <div class="justify-self-end" v-else-if="solarsystem.effect">
-                                                <SolarsystemEffect :effect="solarsystem.effect" />
-                                            </div>
-                                        </ComboboxItem>
-                                    </ComboboxGroup>
-                                </ComboboxList>
+                                <VirtualizedSolarsystemList
+                                    class="w-115"
+                                    align="start"
+                                    :sections="search_sections"
+                                    @select="handleSolarsystemSelect"
+                                />
                             </Combobox>
                         </DialogContent>
                     </Dialog>

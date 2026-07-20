@@ -38,6 +38,7 @@ final class MapUserSettingResource extends JsonResource
             'prompt_for_signature_enabled' => $this->prompt_for_signature_enabled,
             'auto_confirm_signatures' => $this->auto_confirm_signatures ?? false,
             'first_layer_nato_alias' => $this->first_layer_nato_alias ?? false,
+            'preselect_signature_enabled' => $this->preselect_signature_enabled ?? false,
             'suggest_alias_enabled' => $this->suggest_alias_enabled,
             'concat_alias_disabled' => $this->concat_alias_disabled,
             'copy_bookmark_enabled' => $this->copy_bookmark_enabled,
@@ -47,6 +48,7 @@ final class MapUserSettingResource extends JsonResource
             'show_statics_first' => $this->show_statics_first,
             'select_jumped_system' => $this->select_jumped_system,
             'is_archived' => $this->is_archived ?? false,
+            'is_pinned' => $this->is_pinned ?? false,
             'background_image_url' => $this->background_image_path
                 ? Storage::disk('public')->url($this->background_image_path)
                 : null,

@@ -54,6 +54,7 @@ final class UpdateMapUserSettingRequest extends FormRequest
             'prompt_for_signature_enabled' => ['nullable', 'boolean'],
             'auto_confirm_signatures' => ['nullable', 'boolean'],
             'first_layer_nato_alias' => ['nullable', 'boolean'],
+            'preselect_signature_enabled' => ['boolean'],
             'suggest_alias_enabled' => ['boolean'],
             'concat_alias_disabled' => ['boolean'],
             'copy_bookmark_enabled' => ['boolean'],
@@ -64,6 +65,7 @@ final class UpdateMapUserSettingRequest extends FormRequest
             'show_statics_first' => ['boolean'],
             'select_jumped_system' => ['boolean'],
             'is_archived' => ['boolean'],
+            'is_pinned' => ['boolean'],
             'background_image_mode' => ['nullable', 'string', Rule::enum(MapBackgroundMode::class)],
             'layout_override' => ['nullable', 'sometimes', Rule::enum(MapLayout::class)],
         ];

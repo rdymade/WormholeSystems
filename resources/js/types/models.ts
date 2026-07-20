@@ -287,6 +287,7 @@ export type TMapUserSetting = {
     prompt_for_signature_enabled: boolean;
     auto_confirm_signatures?: boolean;
     first_layer_nato_alias?: boolean;
+    preselect_signature_enabled: boolean;
     suggest_alias_enabled: boolean;
     concat_alias_disabled: boolean;
     copy_bookmark_enabled: boolean;
@@ -296,6 +297,7 @@ export type TMapUserSetting = {
     show_statics_first: boolean;
     select_jumped_system: boolean;
     is_archived: boolean;
+    is_pinned: boolean;
     background_image_url: string | null;
     background_image_mode: 'grid' | 'viewport';
     layout_override: 'manual' | 'tree' | null;
