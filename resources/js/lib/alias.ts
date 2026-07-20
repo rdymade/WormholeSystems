@@ -139,16 +139,17 @@ export function guessNextAlias(
     const map_user_settings = useMapUserSettings();
     const concatDisabled = Boolean(map_user_settings.value?.concat_alias_disabled);
     const firstLayerNatoAlias = Boolean(map_user_settings.value?.first_layer_nato_alias);
+    const maybeUniqueAlias = (candidate: string): string => (concatDisabled ? candidate : uniqueAlias(candidate, aliases));
 
     const prefix = concatDisabled ? '' : (parentAlias ?? '').trim();
     const normalizedPrefix = prefix.replace(/-/g, '');
 
     if (firstLayerNatoAlias && isTopLevelAlias(parentAlias)) {
-        return uniqueAlias(nextNatoAlias(aliases), aliases);
+        return maybeUniqueAlias(nextNatoAlias(aliases));
     }
 
     if (firstLayerNatoAlias && isNatoAlias(parentAlias ?? null)) {
-        return uniqueAlias(nextNatoChildAlias(parentAlias!.trim(), aliases), aliases);
+        return maybeUniqueAlias(nextNatoChildAlias(parentAlias!.trim(), aliases));
     }
 
     if (concatDisabled) {
@@ -159,7 +160,7 @@ export function guessNextAlias(
 
         const highestConnectedNumericAlias = numericConnectedOutAliases.reduce((max, alias) => Math.max(max, alias), 0);
 
-        return uniqueAlias(String(highestConnectedNumericAlias + 1), aliases);
+        return String(highestConnectedNumericAlias + 1);
     }
 
     const normalizedParentAlias = concatDisabled && parentAlias ? parentAlias.trim().replace(/-/g, '') : null;
@@ -198,7 +199,7 @@ export function guessNextAlias(
     }, 0);
 
     const result = `${prefix}${highest + 1}`;
-    return uniqueAlias(result.replace(/(\d{3})(?=\d)/g, '$1-'), aliases);
+    return maybeUniqueAlias(result.replace(/(\d{3})(?=\d)/g, '$1-'));
 }
 
 /**
