@@ -44,6 +44,12 @@ function handleToggleSelectJumpedSystem(value: boolean | 'indeterminate') {
         updateMapUserSettings({ select_jumped_system: value });
     }
 }
+
+function handleToggleCompactSignatureList(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ compact_signature_list: value });
+    }
+}
 </script>
 
 <template>
@@ -96,6 +102,14 @@ function handleToggleSelectJumpedSystem(value: boolean | 'indeterminate') {
                             </div>
                         </div>
                         <Checkbox :model-value="map_user_settings.select_jumped_system" @update:model-value="handleToggleSelectJumpedSystem" />
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Compact Signature List</Label>
+                            <div class="text-sm text-muted-foreground">Show signatures in a denser list with less spacing between rows</div>
+                        </div>
+                        <Checkbox :model-value="map_user_settings.compact_signature_list" @update:model-value="handleToggleCompactSignatureList" />
                     </div>
                 </CardContent>
             </Card>

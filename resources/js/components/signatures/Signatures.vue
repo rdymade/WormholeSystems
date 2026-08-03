@@ -15,11 +15,13 @@ import { usePasteSignatures } from '@/composables/signatures/usePasteSignatures'
 import { useSignatures } from '@/composables/signatures/useSignatures';
 import { useSortableSignatures } from '@/composables/signatures/useSortedSignatures';
 import { useActiveMapCharacter } from '@/composables/useActiveMapCharacter';
+import { useMapUserSettings } from '@/composables/useMapUserSettings';
+import { useShowMap } from '@/composables/useShowMap';
 import usePermission from '@/composables/usePermission';
-import { createSignature } from '@/map/api';
+import { createSignature, updateMapUserSettings } from '@/map/api';
 import type { TResolvedSelectedMapSolarsystem } from '@/pages/maps';
 import { useLocalStorage } from '@vueuse/core';
-import { ArrowDown, ArrowUp, CircleHelp, Cloud, Database, Fan, Gem, Landmark, Shield, Swords } from 'lucide-vue-next';
+import { ArrowDown, ArrowUp, CircleHelp, Cloud, Database, Fan, Gem, Landmark, Rows2, Rows3, Shield, Swords } from 'lucide-vue-next';
 import { type Component, computed } from 'vue';
 
 const props = defineProps<{
@@ -31,6 +33,16 @@ const { connections } = useSignatures();
 const { canEdit: can_write } = usePermission();
 
 const character = useActiveMapCharacter();
+
+const map_user_settings = useMapUserSettings();
+
+const page = useShowMap();
+
+function toggleCompactSignatureList() {
+    updateMapUserSettings(page.props.map.slug, {
+        compact_signature_list: !map_user_settings.value.compact_signature_list,
+    });
+}
 
 const {
     signatures,
@@ -117,6 +129,17 @@ function createNewSignature() {
             <span v-if="filteredSignatures.length" class="ml-1 text-amber-400">{{ filteredSignatures.length }}</span>
             <span v-if="hiddenSignaturesCount > 0" class="ml-1 text-muted-foreground/70">{{ hiddenSignaturesCount }} hidden</span>
             <template #actions>
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <MapPanelHeaderActionButton size="icon" @click="toggleCompactSignatureList">
+                            <Rows2 v-if="map_user_settings.compact_signature_list" class="size-3.5" />
+                            <Rows3 v-else class="size-3.5" />
+                        </MapPanelHeaderActionButton>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        {{ map_user_settings.compact_signature_list ? 'Switch to comfortable signature list' : 'Switch to compact signature list' }}
+                    </TooltipContent>
+                </Tooltip>
                 <ToggleGroup v-model="activeCategoryFilters" type="multiple" size="sm" variant="outline">
                     <Tooltip v-for="option in categoryFilterOptions" :key="option.value">
                         <TooltipTrigger as-child>
@@ -166,7 +189,8 @@ function createNewSignature() {
         <MapPanelContent>
             <!-- Header -->
             <div
-                class="flex items-center gap-2 border-b border-border/30 bg-muted/20 px-3 py-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                class="flex items-center gap-2 border-b border-border/30 bg-muted/20 px-3 font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                :class="map_user_settings.compact_signature_list ? 'py-0.5' : 'py-1.5'"
             >
                 <button class="flex w-16 shrink-0 items-center gap-1 hover:text-foreground" @click="handleSort('id')">
                     <span>ID</span>
