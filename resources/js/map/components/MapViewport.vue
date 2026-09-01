@@ -147,12 +147,14 @@ function toBasePoint(event: MouseEvent): Vec2 {
     });
 }
 
-function handleContextMenu(event: MouseEvent): void {
-    // Prevent the default context menu on middle click (the pan button).
+function handleMousedown(event: MouseEvent): void {
+    // Prevent the browser's native middle-mouse page scroll / pan.
     if (event.button === 1) {
         event.preventDefault();
-        return;
     }
+}
+
+function handleContextMenu(event: MouseEvent): void {
     emit('surfaceContextMenu', { nodeId: resolveNodeId(event.target), basePoint: toBasePoint(event) });
 }
 </script>
@@ -168,6 +170,7 @@ function handleContextMenu(event: MouseEvent): void {
             class="relative h-full w-full overflow-hidden bg-neutral-100 dark:bg-neutral-950"
             :class="{ 'cursor-grab': store.isTreeLayout.value }"
             :style="scrollableContainerStyle"
+            @mousedown="handleMousedown"
             @contextmenu="handleContextMenu"
         >
             <ContextMenu @update:open="(open) => emit('contextMenuOpenChange', open)">
