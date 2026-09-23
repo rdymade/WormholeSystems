@@ -68,6 +68,12 @@ function handlePreselectSignatureChange(value: boolean | 'indeterminate') {
     }
 }
 
+function handleAutoConfirmSignaturePromptChange(value: boolean | 'indeterminate') {
+    if (typeof value === 'boolean') {
+        updateMapUserSettings({ auto_confirm_signature_prompt: value });
+    }
+}
+
 function handleSuggestAliasChange(value: boolean | 'indeterminate') {
     if (typeof value === 'boolean') {
         updateMapUserSettings({ suggest_alias_enabled: value });
@@ -178,6 +184,19 @@ function handleSolarsystemSelect(solarsystem: TStaticSolarsystem) {
                             </div>
                         </div>
                         <Checkbox :model-value="map_user_settings.preselect_signature_enabled" @update:model-value="handlePreselectSignatureChange" />
+                    </div>
+
+                    <div class="flex items-center justify-between" v-if="map_user_settings.prompt_for_signature_enabled">
+                        <div class="space-y-0.5">
+                            <Label class="text-sm font-medium">Auto confirm signature prompt</Label>
+                            <div class="text-sm text-muted-foreground">
+                                Automatically confirm the signature prompt after a jump, using the selected signature and suggested alias
+                            </div>
+                        </div>
+                        <Checkbox
+                            :model-value="map_user_settings.auto_confirm_signature_prompt"
+                            @update:model-value="handleAutoConfirmSignaturePromptChange"
+                        />
                     </div>
 
                     <div class="flex items-center justify-between">

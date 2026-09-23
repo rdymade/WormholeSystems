@@ -240,6 +240,23 @@ it('persists the preselect signature setting', function () {
     )->toBeTruthy();
 });
 
+it('persists the auto confirm signature prompt setting', function () {
+    $map = Map::factory()->create();
+    $user = User::factory()->ownsMap($map)->create();
+
+    actingAs($user);
+
+    $this->put(route('maps.user-settings.update', $map), [
+        'auto_confirm_signature_prompt' => true,
+    ])->assertRedirect();
+
+    expect(MapUserSetting::query()
+        ->where('user_id', $user->id)
+        ->where('map_id', $map->id)
+        ->value('auto_confirm_signature_prompt')
+    )->toBeTruthy();
+});
+
 // --- Compact signature list setting ---
 
 it('persists the compact signature list setting', function () {

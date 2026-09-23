@@ -26,6 +26,7 @@ final readonly class MapSettingsFeature implements ProvidesInertiaProperties
         'killmail_filter' => 'all',
         'prompt_for_signature_enabled' => false,
         'preselect_signature_enabled' => false,
+        'auto_confirm_signature_prompt' => false,
         'suggest_alias_enabled' => false,
         'copy_bookmark_enabled' => false,
         'follow_character_enabled' => false,

@@ -29,6 +29,8 @@ const props = defineProps<{
     mapSolarsystems?: TMapSolarsystem[];
     /** Pre-select the first likely signature on open so Enter confirms it immediately. */
     preselectFirstSignature?: boolean;
+    /** Confirm the prompt automatically after its initial selection is prepared. */
+    autoConfirmSignaturePrompt?: boolean;
 }>();
 
 const page = useShowMap();
@@ -151,6 +153,10 @@ watch(open, (isOpen) => {
         lifetime.value = 'healthy';
         massStatus.value = 'fresh';
         shipSize.value = 'auto';
+
+        if (props.autoConfirmSignaturePrompt) {
+            void nextTick(() => handleConfirm());
+        }
     }
 });
 

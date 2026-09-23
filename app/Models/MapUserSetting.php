@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|string|null $introduction_confirmed_at
  * @property bool $prompt_for_signature_enabled
  * @property bool $preselect_signature_enabled
+ * @property bool $auto_confirm_signature_prompt
  * @property bool $suggest_alias_enabled
  * @property bool $copy_bookmark_enabled
  * @property bool $follow_character_enabled
@@ -86,6 +87,7 @@ final class MapUserSetting extends Model
             'introduction_confirmed_at' => 'immutable_datetime',
             'prompt_for_signature_enabled' => 'boolean',
             'preselect_signature_enabled' => 'boolean',
+            'auto_confirm_signature_prompt' => 'boolean',
             'suggest_alias_enabled' => 'boolean',
             'copy_bookmark_enabled' => 'boolean',
             'follow_character_enabled' => 'boolean',
