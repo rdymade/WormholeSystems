@@ -6,7 +6,6 @@ import { useStaticData } from '@/composables/useStaticData';
 import { useTrackingSystems } from '@/composables/useTrackingSystems';
 import { aliasTargetKind, suggestAlias } from '@/lib/alias';
 import { buildSignatureBookmark } from '@/lib/bookmark';
-import { groupSignatureOptions } from '@/lib/signatureCompatibility';
 import { isWormholeSystem } from '@/lib/solarsystem';
 import { createTracking, updateMapUserSettings, useMapSolarsystems } from '@/map/api';
 import { show } from '@/routes/maps';
@@ -33,7 +32,6 @@ export function useTracking() {
     // All of the origin's signatures; the dialog demotes the ones that cannot
     // lead to the target instead of hiding them.
     const signatures = computed(() => origin_map_solarsystem.value?.signatures?.toSorted(sortSignatures));
-    const possible_signatures = computed(() => groupSignatureOptions(signatures.value ?? [], target_solarsystem.value?.class).likely);
     const existing_map_solarsystem = computed(() => map_solarsystems.value.find((s) => s.solarsystem_id === target_solarsystem.value?.id));
     const existing_connection = computed(() => {
         if (!existing_map_solarsystem.value) return null;
@@ -137,7 +135,7 @@ export function useTracking() {
         }
 
         const gate_connected = isGateConnected(origin_map_solarsystem.value?.solarsystem_id, target_solarsystem.value?.id);
-        if (gate_connected || !possible_signatures.value.length || !map_user_settings.value.prompt_for_signature_enabled) {
+        if (gate_connected || !map_user_settings.value.prompt_for_signature_enabled) {
             return createTracking(origin_map_solarsystem.value!.id, target_solarsystem_id, {}, () => followInto(target_solarsystem_id));
         }
 
