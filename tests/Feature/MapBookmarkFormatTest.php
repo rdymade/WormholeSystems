@@ -162,6 +162,23 @@ it('accepts a format with literal text around known tokens', function () {
     expect($map->fresh()->bookmark_format_wormhole)->toBe('[{alias}] {sig}');
 });
 
+it('preserves leading whitespace in bookmark formats', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Manager))
+        ->put("/maps/{$map->slug}/bookmark-format", [
+            'bookmark_format_wormhole' => '  [{alias}] {sig}',
+            'bookmark_format_kspace' => "\t{name} {region}",
+            'bookmark_format_return' => ' *{sig} {class} {alias}',
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect($map->fresh()->bookmark_format_wormhole)->toBe('  [{alias}] {sig}')
+        ->and($map->bookmark_format_kspace)->toBe("\t{name} {region}")
+        ->and($map->bookmark_format_return)->toBe(' *{sig} {class} {alias}');
+});
+
 it('lets a manager update the return format and ignored alias', function () {
     $map = Map::factory()->create();
 

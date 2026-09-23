@@ -25,6 +25,12 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trimStrings(except: [
+            'bookmark_format_wormhole',
+            'bookmark_format_kspace',
+            'bookmark_format_return',
+        ]);
+
         $middleware->encryptCookies(except: ['appearance', 'announcement_dismissed', 'layout', 'sort_preferences']);
 
         $middleware->web(append: [
