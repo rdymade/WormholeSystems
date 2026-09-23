@@ -8,6 +8,7 @@ enum AliasScheme: string
 {
     case Numeric = 'numeric';
     case Alphabetical = 'alphabetical';
+    case Alphanumeric = 'alphanumeric';
 
     public const self DEFAULT = self::Numeric;
 }

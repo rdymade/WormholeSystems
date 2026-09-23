@@ -68,6 +68,32 @@ describe('guessNextAlias (alphabetical)', () => {
     });
 });
 
+describe('guessNextAlias (alphanumeric)', () => {
+    const scheme = 'alphanumeric' as const;
+
+    it('uses unique NATO words for root systems and skips CHARLIE', () => {
+        expect(guessNextAlias(null, [], { scheme })).toBe('ALPHA');
+        expect(guessNextAlias(null, ['ALPHA'], { scheme })).toBe('BRAVO');
+        expect(guessNextAlias(null, ['ALPHA', 'BRAVO'], { scheme })).toBe('DELTA');
+    });
+
+    it('uses the root initial and fills numbered child gaps', () => {
+        expect(guessNextAlias('BRAVO', [], { scheme })).toBe('B1');
+        expect(guessNextAlias('BRAVO', ['B1'], { scheme })).toBe('B2');
+        expect(guessNextAlias('BRAVO', ['B1', 'B3'], { scheme })).toBe('B2');
+    });
+
+    it('adds a dash after the third numeric level', () => {
+        expect(guessNextAlias('B12', [], { scheme })).toBe('B121');
+        expect(guessNextAlias('B121', [], { scheme })).toBe('B121-1');
+        expect(guessNextAlias('B121', ['B121-1'], { scheme })).toBe('B121-2');
+    });
+
+    it('keeps NATO roots unique across source systems', () => {
+        expect(guessNextAlias(null, ['ALPHA', 'BRAVO', 'A1', 'B1'], { scheme })).toBe('DELTA');
+    });
+});
+
 describe('guessNextAlias (gap filling)', () => {
     it('fills a freed numeric index before extending the sequence', () => {
         expect(guessNextAlias(null, ['1', '3', '4'])).toBe('2');

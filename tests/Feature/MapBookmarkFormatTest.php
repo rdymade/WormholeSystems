@@ -44,6 +44,17 @@ it('lets a manager switch the alias scheme to alphabetical', function () {
     expect($map->fresh()->bookmark_alias_scheme)->toBe(AliasScheme::Alphabetical);
 });
 
+it('lets a manager switch the alias scheme to alphanumeric', function () {
+    $map = Map::factory()->create();
+
+    actingAs(bookmarkFormatUser($map, Permission::Manager))
+        ->put("/maps/{$map->slug}/bookmark-format", ['bookmark_alias_scheme' => 'alphanumeric'])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect($map->fresh()->bookmark_alias_scheme)->toBe(AliasScheme::Alphanumeric);
+});
+
 it('forbids a member from updating the alias scheme', function () {
     $map = Map::factory()->create();
 

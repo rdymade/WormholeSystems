@@ -1,8 +1,8 @@
 ---
-title: Alternative alias convention
+title: Alphabetical alias convention
 ---
 
-# Alternative alias convention
+# Alphabetical alias convention
 
 The [standard convention](/documentation/bookmarking/why-this-system) numbers holes: `1, 2, 3`, then `21, 22, 23` inside the `2`. Some groups prefer letters instead. A manager can switch the whole map to an **alphabetical** scheme in **Map settings → Mapping → Bookmark Format**.
 

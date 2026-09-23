@@ -2,7 +2,7 @@
  * The per-map alias suggestion convention. Kept in sync with the `AliasScheme`
  * enum on the backend.
  */
-export type TAliasScheme = 'numeric' | 'alphabetical';
+export type TAliasScheme = 'numeric' | 'alphabetical' | 'alphanumeric';
 
 /**
  * The kind of system an alphabetical suggestion is being generated for. K-space
@@ -40,6 +40,34 @@ export function aliasTargetKind(isTargetWormhole: boolean, targetClass: string |
  * since those are reserved for k-space exits (high/low/null-sec, Pochven).
  */
 const WORMHOLE_LETTERS = 'ABCDEFGIJKMOQRSTUVWXYZ';
+
+const NATO_ALIASES = [
+    'ALPHA',
+    'BRAVO',
+    'DELTA',
+    'ECHO',
+    'FOXTROT',
+    'GOLF',
+    'HOTEL',
+    'INDIA',
+    'JULIET',
+    'KILO',
+    'LIMA',
+    'MIKE',
+    'NOVEMBER',
+    'OSCAR',
+    'PAPA',
+    'QUEBEC',
+    'ROMEO',
+    'SIERRA',
+    'TANGO',
+    'UNIFORM',
+    'VICTOR',
+    'WHISKEY',
+    'XRAY',
+    'YANKEE',
+    'ZULU',
+] as const;
 
 /**
  * The next letter after `index`, capped at the last letter once the 22-letter
@@ -123,6 +151,42 @@ function guessNextAlphabeticalAlias(prefix: string, aliases: string[], targetKin
     return `${prefix}${nextWormholeLetter(prefix, aliases)}`;
 }
 
+function nextNatoAlias(aliases: string[]): string {
+    const used = new Set(aliases);
+    return NATO_ALIASES.find((alias) => !used.has(alias)) ?? NATO_ALIASES[NATO_ALIASES.length - 1];
+}
+
+function alphanumericAliasKey(alias: string): string {
+    return alias.replace(/-/g, '');
+}
+
+function alphanumericChildPrefix(prefix: string): string {
+    return NATO_ALIASES.includes(prefix as (typeof NATO_ALIASES)[number]) ? prefix[0] : alphanumericAliasKey(prefix);
+}
+
+function formatAlphanumericAlias(prefix: string, index: number): string {
+    const key = `${alphanumericChildPrefix(prefix)}${index}`;
+    return key.length > 4 ? `${key.slice(0, 4)}-${key.slice(4)}` : key;
+}
+
+function guessNextAlphanumericAlias(prefix: string, aliases: string[]): string {
+    if (!prefix) return nextNatoAlias(aliases);
+
+    const key = alphanumericChildPrefix(prefix);
+    const children = aliases
+        .map(alphanumericAliasKey)
+        .filter((alias) => alias.startsWith(key) && /^\d+$/.test(alias.slice(key.length)))
+        .filter((alias, _, all) => !all.some((other) => other !== alias && other.length < alias.length && alias.startsWith(other)));
+
+    const used = new Set<number>();
+    for (const child of children) {
+        const index = Number.parseInt(child.slice(key.length), 10);
+        if (!Number.isNaN(index)) used.add(index);
+    }
+
+    return formatAlphanumericAlias(prefix, lowestFreeIndex(used));
+}
+
 /**
  * Work out the next concatenated child alias for a system, given its parent's
  * alias and every alias already in use on the map.
@@ -136,7 +200,8 @@ function guessNextAlphabeticalAlias(prefix: string, aliases: string[], targetKin
  * mistaken for a direct child of "1".
  *
  * Alphabetical (`opts.scheme`): children use letters instead of digits (see
- * `guessNextAlphabeticalAlias`).
+ * `guessNextAlphabeticalAlias`). Alphanumeric uses NATO words for roots, then
+ * the root's initial followed by numeric child indexes.
  *
  * Suggestions are always upper-cased, and existing aliases are matched
  * case-insensitively, so a hand-typed lowercase alias ("ab", "ah1") still
@@ -153,6 +218,10 @@ export function guessNextAlias(parentAlias: string | null | undefined, aliases: 
 
     if (opts?.scheme === 'alphabetical') {
         return guessNextAlphabeticalAlias(prefix, knownAliases, opts.targetKind);
+    }
+
+    if (opts?.scheme === 'alphanumeric') {
+        return guessNextAlphanumericAlias(prefix, knownAliases);
     }
 
     const numericChildren = knownAliases.filter((alias) => {

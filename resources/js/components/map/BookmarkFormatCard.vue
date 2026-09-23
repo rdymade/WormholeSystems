@@ -25,6 +25,7 @@ const { map, canEdit } = defineProps<{
 const aliasSchemeOptions: { value: TAliasScheme; label: string; example: string }[] = [
     { value: 'numeric', label: 'Numeric', example: '11, 12, 13' },
     { value: 'alphabetical', label: 'Alphabetical', example: 'AA, AB, AH1' },
+    { value: 'alphanumeric', label: 'Alphanumeric', example: 'ALPHA, A1, A121-1' },
 ];
 
 const aliasScheme = ref<TAliasScheme>(map.bookmark_alias_scheme);
@@ -215,7 +216,7 @@ function resetToDefault(field: Field): void {
             <div class="space-y-2">
                 <Label class="text-sm font-medium">Alias scheme</Label>
 
-                <div class="grid gap-2 sm:grid-cols-2">
+                <div class="grid gap-2 sm:grid-cols-3">
                     <button
                         v-for="option in aliasSchemeOptions"
                         :key="option.value"

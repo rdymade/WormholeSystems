@@ -40,4 +40,4 @@ This is the bookmark list _inside the `1`_: `*1` is the return hole back the way
 
 > You rarely type these by hand — the mapper builds them for you. See [Let the mapper name it](/documentation/bookmarking/let-the-mapper-name-it).
 
-Prefer letters to numbers? A manager can switch the whole map to an [alternative alias convention](/documentation/bookmarking/alternative-alias-convention).
+Prefer an alternative to numbers? A manager can switch the whole map to the [Alphabetical alias convention](/documentation/bookmarking/alphabetical-alias-convention) or [Alphanumeric alias convention](/documentation/bookmarking/alphanumeric-alias-convention).
